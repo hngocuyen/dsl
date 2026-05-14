@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tiểu Thuyết - 0-10</title>
+    <title>Đọa Sinh Luân</title>
     <style>
         * {
             margin: 0;
@@ -107,7 +107,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>Tiểu Thuyết 0-10</h1>
+        <h1>Đọa Sinh Luân</h1>
         
         <div class="chapter-nav" id="chapterNav"></div>
         
@@ -122,45 +122,76 @@
     </div>
 
     <script>
-        const chapters = [
-            { file: '0-10/0.txt', title: 'Ngoại Giới' },
-            { file: '0-10/1.txt', title: 'Dị Nhân' },
-            { file: '0-10/2.txt', title: 'Khởi Hành' },
-            { file: '0-10/3.txt', title: 'Quỷ Khoáng' },
-            { file: '0-10/4.txt', title: 'Thứ Dưới Đáy Mỏ' },
-            { file: '0-10/5.txt', title: 'Khe Hở' },
-            { file: '0-10/6.txt', title: 'Ngoại Quy' },
-            { file: '0-10/7.txt', title: 'Kẻ Bị Thần Bỏ Rơi' }
+        // Danh sách file trong folder 0-10
+        const chapterFiles = [
+            '0-10/0.txt',
+            '0-10/1.txt',
+            '0-10/2.txt',
+            '0-10/3.txt',
+            '0-10/4.txt',
+            '0-10/5.txt',
+            '0-10/6.txt',
+            '0-10/7.txt'
         ];
-        
+
+        let chapters = [];
         let currentChapter = 0;
 
-        async function loadChapter(index) {
+        // Đọc tiêu đề từ dòng đầu file (tìm -- Tiêu đề --)
+        function extractTitle(content) {
+            const lines = content.split('\n');
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                // Dạng --Tiêu đề-- hoặc -- Tiêu đề --
+                const match = line.match(/^--\s*(.+?)\s*--$/);
+                if (match) return match[1];
+                // Dạng Chap X — Tiêu đề
+                const match2 = line.match(/^Chap\s*\d+\s*[—\-]+\s*(.+)$/i);
+                if (match2) return match2[1];
+            }
+            return null;
+        }
+
+        // Xóa dòng tiêu đề khỏi nội dung
+        function removeTitle(content) {
+            const lines = content.split('\n');
+            while (lines.length > 0 && lines[0].trim() === '') lines.shift();
+            if (lines.length > 0) {
+                const line = lines[0].trim();
+                if (line.match(/^--.*--$/) || line.match(/^Chap\s*\d+\s*[—\-]/i)) {
+                    lines.shift();
+                    while (lines.length > 0 && lines[0].trim() === '') lines.shift();
+                }
+            }
+            return lines.join('\n').trim();
+        }
+
+        async function init() {
+            // Tải tất cả file để lấy tiêu đề
+            for (let i = 0; i < chapterFiles.length; i++) {
+                try {
+                    const response = await fetch(chapterFiles[i]);
+                    const content = await response.text();
+                    const title = extractTitle(content) || ('Chương ' + (i + 1));
+                    chapters.push({ file: chapterFiles[i], title: title, content: content });
+                } catch (e) {
+                    chapters.push({ file: chapterFiles[i], title: 'Chương ' + (i + 1), content: '' });
+                }
+            }
+            createNavButtons();
+            loadChapter(0);
+        }
+
+        function loadChapter(index) {
             if (index < 0 || index >= chapters.length) return;
             
             currentChapter = index;
             const chapter = chapters[index];
             
             document.getElementById('chapterTitle').textContent = 'Chap ' + (index + 1) + ' (' + chapter.title + ')';
-            document.getElementById('novelContent').textContent = 'Đang tải nội dung...';
             
-            try {
-                const response = await fetch(chapter.file);
-                let content = await response.text();
-                
-                // Xóa dòng tiêu đề trong nội dung
-                const lines = content.split('\n');
-                while (lines.length > 0 && lines[0].trim() === '') lines.shift();
-                if (lines.length > 0 && (lines[0].trim().startsWith('--') || lines[0].trim().startsWith('Chap '))) {
-                    lines.shift();
-                    while (lines.length > 0 && lines[0].trim() === '') lines.shift();
-                }
-                content = lines.join('\n').trim();
-                
-                document.getElementById('novelContent').textContent = content;
-            } catch (error) {
-                document.getElementById('novelContent').textContent = 'Lỗi khi tải chương này.';
-            }
+            const content = removeTitle(chapter.content);
+            document.getElementById('novelContent').textContent = content || 'Chưa có nội dung.';
             
             // Cập nhật nút
             document.getElementById('prevBtn').disabled = currentChapter === 0;
@@ -192,8 +223,7 @@
         }
 
         // Khởi tạo
-        createNavButtons();
-        loadChapter(0);
+        init();
     </script>
 </body>
 </html>
