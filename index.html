@@ -188,7 +188,10 @@
             currentChapter = index;
             const chapter = chapters[index];
             
-            document.getElementById('chapterTitle').textContent = 'Chap ' + (index + 1) + ' (' + chapter.title + ')';
+            document.getElementById('chapterTitle').textContent = 'Chap ' + index + ' (' + chapter.title + ')';
+            
+            // Cuộn lên đầu trang
+            window.scrollTo(0, 0);
             
             const content = removeTitle(chapter.content);
             document.getElementById('novelContent').textContent = content || 'Chưa có nội dung.';
@@ -216,7 +219,7 @@
             chapters.forEach((chapter, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'chapter-btn';
-                btn.textContent = 'Chap ' + (index + 1);
+                btn.textContent = 'Chap ' + index;
                 btn.onclick = () => loadChapter(index);
                 nav.appendChild(btn);
             });
